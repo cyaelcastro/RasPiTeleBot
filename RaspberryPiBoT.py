@@ -1,71 +1,24 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import logging
+from tokenfile import token
+import telebot
 import os
 
-# Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
 
-logger = logging.getLogger(__name__)
+SSID = os.popen("iwgetid")
+IP = os.popen("hostname -I")
 
+bot = telebot.TeleBot(str(token))
 
-# Define a few command handlers. These usually take the two arguments bot and
-# update. Error handlers also receive the raised TelegramError object in error.
-def start(bot, update):
-    """Send a message when the command /start is issued."""
-    update.message.reply_text('Hi!')
+@bot.message_handler(commands=["start", "help"])
+def send_welcome(message):
+	bot.reply_to(message, "Hello, I'm RaspberryPiBot, for now, only i can help you getting the IP and SSID with /ip and /SSID")
 
+@bot.message_handler(commands=["SSID", "ssid"])
+def send_welcome(message):
+        bot.reply_to(message, "SSID: "+ SSID.read())
 
-def help(bot, update):
-    """Send a message when the command /help is issued."""
-    update.message.reply_text('Help!')
-
-
-def echo(bot, update):
-    """Echo the user message."""
-    update.message.reply_text(update.message.text)
-
-def get_ip(bot,update):
-    f = os.popen('ifconfig wlan0 | grep "inet\ addr" | cut -d: -f2 | cut -d" " -f1')
-    your_ip=f.read()
-    update.message.reply_text(str(your_ip))
-    
-
-def error(bot, update, error):
-    """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+@bot.message_handler(commands=["IP","ip","Ip"])
+def send_welcome(message):
+        bot.reply_to(message, "IP: "+ IP.read())
 
 
-def main():
-    """Start the bot."""
-    # Create the EventHandler and pass it your bot's token.
-    updater = Updater("TOKEN")
-
-    # Get the dispatcher to register handlers
-    dp = updater.dispatcher
-
-    # on different commands - answer in Telegram
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("ip", get_ip))
-
-    # on noncommand i.e message - echo the message on Telegram
-    dp.add_handler(MessageHandler(Filters.text, echo))
-
-    # log all errors
-    dp.add_error_handler(error)
-
-    # Start the Bot
-    updater.start_polling()
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
-    updater.idle()
-
-
-if __name__ == '__main__':
-    main()
+bot.polling()
